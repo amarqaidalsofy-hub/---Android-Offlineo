@@ -1,35 +1,42 @@
-# Gradle files
-.gradle/
-build/
-.kotlin/
+name: Build Android APK
 
-# Local configuration file (sdk path, etc)
-local.properties
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
 
-# Log/OS Files
-*.log
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-# Keystore files
-*.jks
-*.keystore
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-# Android Profiling
-*.hprof
+      - name: Build debug APK
+        working-directory: ammar_v10
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ammar-accounting-debug-apk
+          path: ammar_v10/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
